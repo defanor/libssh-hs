@@ -125,7 +125,7 @@ withSession options action =
 -- | Connects, performs an action, disconnects.
 withConnection :: SSHSession -> IO a -> IO a
 withConnection session action =
-  throwOnError "ssh_options_setssh_connect" (ssh_connect session)
+  throwOnError "ssh_connect" (ssh_connect session)
   >> (action `finally` (ssh_disconnect session))
 
 
