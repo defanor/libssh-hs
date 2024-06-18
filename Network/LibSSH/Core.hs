@@ -244,9 +244,9 @@ foreign import capi "libssh/libssh.h ssh_userauth_publickey"
 foreign import capi "libssh/libssh.h ssh_userauth_agent"
   ssh_userauth_agent
   :: SSHSession -> CString -> IO CInt
-foreign import capi "libssh/libssh.h ssh_userauth_publickey_auto_get_current_identity"
-  ssh_userauth_publickey_auto_get_current_identity
-  :: SSHSession -> Ptr CString -> IO CInt
+-- foreign import capi "libssh/libssh.h ssh_userauth_publickey_auto_get_current_identity"
+--   ssh_userauth_publickey_auto_get_current_identity
+--   :: SSHSession -> Ptr CString -> IO CInt
 foreign import capi "libssh/libssh.h ssh_userauth_publickey_auto"
   ssh_userauth_publickey_auto
   :: SSHSession -> CString -> CString -> IO CInt
@@ -346,8 +346,8 @@ foreign import capi "libssh/sftp.h ssh_version" ssh_version
 -- ** The SSH Public Key Infrastructure
 foreign import capi "libssh/libssh.h ssh_key_new" ssh_key_new
   :: IO SSHKey
-foreign import capi "libssh/libssh.h ssh_key_dup" ssh_key_dup
-  :: SSHKey -> IO SSHKey
+-- foreign import capi "libssh/libssh.h ssh_key_dup" ssh_key_dup
+--   :: SSHKey -> IO SSHKey
 -- foreign import capi "libssh/libssh.h ssh_key_clean" ssh_key_clean
 --   :: SSHKey -> IO ()
 foreign import capi "libssh/libssh.h ssh_key_free" ssh_key_free
@@ -408,9 +408,9 @@ foreign import capi "libssh/libssh.h ssh_get_issue_banner" ssh_get_issue_banner
 foreign import capi "libssh/libssh.h ssh_get_openssh_version"
   ssh_get_openssh_version
   :: SSHSession -> IO CInt
-foreign import capi "libssh/libssh.h ssh_session_set_disconnect_message"
-  ssh_session_set_disconnect_message
-  :: SSHSession -> CString -> IO CInt
+-- foreign import capi "libssh/libssh.h ssh_session_set_disconnect_message"
+--   ssh_session_set_disconnect_message
+--   :: SSHSession -> CString -> IO CInt
 foreign import capi "libssh/libssh.h ssh_copyright" ssh_copyright
   :: IO CString
 foreign import capi "libssh/libssh.h ssh_disconnect" ssh_disconnect
