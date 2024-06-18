@@ -24,7 +24,7 @@ main = 'withSSH' $
   'withSession' [OptHost "example.com", OptPort 22, OptUser (Just "user"),
                OptKnownhosts Nothing, OptTimeout 600] $ \\session ->
   'withConnection' session $ do
-  'authenticateWithKeys' session "id_rsa.pub" "id_rsa"
+  'authenticateWithKeys' session Nothing "id_rsa.pub" "id_rsa" Nothing
   'withSessionChannel' session $ \\channel ->
     'channelRequestExec' channel "uname -a"
     >> 'channelReadAll' channel >>= BS.putStrLn
@@ -73,6 +73,8 @@ withPrivateKeyFile privKeyPath passphrase f =
   withCString privKeyPath $ \privKeyPathCStr ->
   withCStringMaybe passphrase $ \passphraseCStr ->
   alloca $ \privKeyPtr -> do
+  -- Skipping a callback to ssh_pki_import_privkey_file here, though
+  -- it may be nice to implement in the future.
   throwOnError "ssh_pki_import_privkey_file"
     (ssh_pki_import_privkey_file
      privKeyPathCStr passphraseCStr nullFunPtr nullPtr privKeyPtr)
@@ -90,7 +92,7 @@ data SSHOption = OptHost String
                | OptUser (Maybe String)
                | OptSSHDir (Maybe FilePath)
                | OptKnownhosts (Maybe FilePath)
-               | OptGlobalKnownhosts (Maybe FilePath)
+               --  | OptGlobalKnownhosts (Maybe FilePath)
                | OptIdentity String
                | OptTimeout Int
                | OptTimeoutUsec Int
@@ -109,7 +111,7 @@ setOption session option =
     OptUser user -> withCStringMaybe user (so sshOptionsUser)
     OptSSHDir dir -> withCStringMaybe dir (so sshOptionsSSHDir)
     OptKnownhosts hf -> withCStringMaybe hf (so sshOptionsKnownhosts)
-    OptGlobalKnownhosts ghf -> withCStringMaybe ghf (so sshOptionsGlobalKnownhosts)
+    -- OptGlobalKnownhosts ghf -> withCStringMaybe ghf (so sshOptionsGlobalKnownhosts)
     OptIdentity idfn -> withCString idfn (so sshOptionsIdentity)
     OptTimeout sec -> with (fromIntegral sec :: CInt) (so sshOptionsTimeout)
     OptTimeoutUsec usec -> with (fromIntegral usec :: CInt) (so sshOptionsTimeoutUsec)

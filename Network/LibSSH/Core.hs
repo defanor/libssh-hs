@@ -55,12 +55,12 @@ data {-# CTYPE "libssh/sftp.h" "struct sftp_statvfs_struct" #-}
   SFTPStatvfsStruct
 type SFTPStatsvfs = Ptr SFTPStatvfsStruct
 
-type SSHOptionCode = CInt
-
 type SSHAuthCallback = FunPtr
   (CString -> CString -> CSize -> CInt -> CInt -> Ptr CChar -> CInt)
 
 -- ** Option codes
+
+type SSHOptionCode = CInt
 
 foreign import capi "libssh/libssh.h value SSH_OPTIONS_HOST"
   sshOptionsHost :: SSHOptionCode
@@ -78,8 +78,8 @@ foreign import capi "libssh/libssh.h value SSH_OPTIONS_SSH_DIR"
   sshOptionsSSHDir :: SSHOptionCode
 foreign import capi "libssh/libssh.h value SSH_OPTIONS_KNOWNHOSTS"
   sshOptionsKnownhosts :: SSHOptionCode
-foreign import capi "libssh/libssh.h value SSH_OPTIONS_GLOBAL_KNOWNHOSTS"
-  sshOptionsGlobalKnownhosts :: SSHOptionCode
+-- foreign import capi "libssh/libssh.h value SSH_OPTIONS_GLOBAL_KNOWNHOSTS"
+--   sshOptionsGlobalKnownhosts :: SSHOptionCode
 foreign import capi "libssh/libssh.h value SSH_OPTIONS_IDENTITY"
   sshOptionsIdentity :: SSHOptionCode
 foreign import capi "libssh/libssh.h value SSH_OPTIONS_ADD_IDENTITY"
@@ -88,6 +88,43 @@ foreign import capi "libssh/libssh.h value SSH_OPTIONS_TIMEOUT"
   sshOptionsTimeout :: SSHOptionCode
 foreign import capi "libssh/libssh.h value SSH_OPTIONS_TIMEOUT_USEC"
   sshOptionsTimeoutUsec :: SSHOptionCode
+
+-- ** Authentication method codes
+
+type SSHAuthMethodCode = CInt
+
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_UNKNOWN"
+  sshAuthMethodUnknown :: SSHAuthMethodCode
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_NONE"
+  sshAuthMethodNone :: SSHAuthMethodCode
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_PASSWORD"
+  sshAuthMethodPassword :: SSHAuthMethodCode
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_PUBLICKEY"
+  sshAuthMethodPublickey :: SSHAuthMethodCode
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_HOSTBASED"
+  sshAuthMethodHostbased :: SSHAuthMethodCode
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_INTERACTIVE"
+  sshAuthMethodInteractive :: SSHAuthMethodCode
+foreign import capi "libssh/libssh.h value SSH_AUTH_METHOD_GSSAPI_MIC"
+  sshAuthMethodGssapiMic :: SSHAuthMethodCode
+
+-- ** Key types
+
+type SSHKeyType = CInt
+
+-- Including key types available from libssh 0.7.3 to 0.10.6
+
+foreign import capi "libssh/libssh.h value SSH_KEYTYPE_UNKNOWN"
+  sshKeytypeUnknown :: SSHKeyType
+foreign import capi "libssh/libssh.h value SSH_KEYTYPE_RSA"
+  sshKeytypeRsa :: SSHKeyType
+foreign import capi "libssh/libssh.h value SSH_KEYTYPE_RSA1"
+  sshKeytypeRsa1 :: SSHKeyType
+foreign import capi "libssh/libssh.h value SSH_KEYTYPE_ECDSA"
+  sshKeytypeEcdsa :: SSHKeyType
+foreign import capi "libssh/libssh.h value SSH_KEYTYPE_ED25519"
+  sshKeytypeEd25519 :: SSHKeyType
+
 
 -- * The libssh SFTP API
 foreign import capi "libssh/sftp.h sftp_new" sftp_new
@@ -186,21 +223,40 @@ foreign import capi "libssh/libssh.h ssh_finalize" ssh_finalize :: IO CInt
 -- foreign import capi "libssh/libssh.h libssh_destructor" libssh_destructor :: IO ()
 
 -- ** The SSH authentication functions
+foreign import capi "libssh/libssh.h ssh_set_agent_channel"
+  ssh_set_agent_channel
+  :: SSHSession -> SSHChannel -> IO CInt
+foreign import capi "libssh/libssh.h ssh_set_agent_socket"
+  ssh_set_agent_socket
+  :: SSHSession -> CInt -> IO CInt
+foreign import capi "libssh/libssh.h ssh_userauth_list"
+  ssh_userauth_list
+  :: SSHSession -> CString -> IO SSHAuthMethodCode
+foreign import capi "libssh/libssh.h ssh_userauth_none"
+  ssh_userauth_none
+  :: SSHSession -> CString -> IO CInt
 foreign import capi "libssh/libssh.h ssh_userauth_try_publickey"
   ssh_userauth_try_publickey
   :: SSHSession -> CString -> SSHKey -> IO CInt
 foreign import capi "libssh/libssh.h ssh_userauth_publickey"
   ssh_userauth_publickey
   :: SSHSession -> CString -> SSHKey -> IO CInt
-foreign import capi "libssh/libssh.h ssh_userauth_password"
-  ssh_userauth_password
-  :: SSHSession -> CString -> CString -> IO CInt
 foreign import capi "libssh/libssh.h ssh_userauth_agent"
   ssh_userauth_agent
   :: SSHSession -> CString -> IO CInt
-foreign import capi "libssh/libssh.h ssh_userauth_none"
-  ssh_userauth_none
-  :: SSHSession -> CString -> IO CInt
+foreign import capi "libssh/libssh.h ssh_userauth_publickey_auto_get_current_identity"
+  ssh_userauth_publickey_auto_get_current_identity
+  :: SSHSession -> Ptr CString -> IO CInt
+foreign import capi "libssh/libssh.h ssh_userauth_publickey_auto"
+  ssh_userauth_publickey_auto
+  :: SSHSession -> CString -> CString -> IO CInt
+foreign import capi "libssh/libssh.h ssh_userauth_password"
+  ssh_userauth_password
+  :: SSHSession -> CString -> CString -> IO CInt
+-- TODO: ssh_userauth_kbdint
+foreign import capi "libssh/libssh.h ssh_userauth_gssapi"
+  ssh_userauth_gssapi
+  :: SSHSession -> IO CInt
 
 -- ** The SSH channel functions
 foreign import capi "libssh/libssh.h ssh_channel_new" ssh_channel_new
@@ -288,15 +344,59 @@ foreign import capi "libssh/sftp.h ssh_version" ssh_version
   :: CInt -> IO CString
 
 -- ** The SSH Public Key Infrastructure
-foreign import capi "libssh/libssh.h ssh_pki_import_pubkey_file"
-  ssh_pki_import_pubkey_file
-  :: CString -> Ptr SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_key_new" ssh_key_new
+  :: IO SSHKey
+foreign import capi "libssh/libssh.h ssh_key_dup" ssh_key_dup
+  :: SSHKey -> IO SSHKey
+-- foreign import capi "libssh/libssh.h ssh_key_clean" ssh_key_clean
+--   :: SSHKey -> IO ()
+foreign import capi "libssh/libssh.h ssh_key_free" ssh_key_free
+  :: SSHKey -> IO ()
+foreign import capi "libssh/libssh.h ssh_key_type" ssh_key_type
+  :: SSHKey -> IO SSHKeyType
+-- foreign import capi "libssh/libssh.h ssh_key_get_signature_algorithm"
+--   ssh_key_get_signature_algorithm
+--   :: SSHSession -> SSHKeyType -> IO CString
+-- foreign import capi "libssh/libssh.h ssh_key_type_from_signature_name"
+--   ssh_key_type_from_signature_name
+--   :: CString -> IO SSHKeyType
+foreign import capi "libssh/libssh.h ssh_key_type_from_name"
+  ssh_key_type_from_name
+  :: CString -> IO SSHKeyType
+-- foreign import capi "libssh/libssh.h ssh_key_type_plain"
+--   ssh_key_type_plain
+--   :: SSHKeyType -> IO SSHKeyType
+foreign import capi "libssh/libssh.h ssh_key_is_public"
+  ssh_key_is_public
+  :: SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_key_is_private"
+  ssh_key_is_private
+  :: SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_pki_import_privkey_base64"
+  ssh_pki_import_privkey_base64
+  :: CString -> CString -> SSHAuthCallback -> Ptr () -> Ptr SSHKey -> IO CInt
 foreign import capi "libssh/libssh.h ssh_pki_import_privkey_file"
   ssh_pki_import_privkey_file
   :: CString -> CString -> SSHAuthCallback -> Ptr () -> Ptr SSHKey -> IO CInt
-foreign import capi "libssh/libssh.h ssh_key_free"
-  ssh_key_free
-  :: SSHKey -> IO ()
+foreign import capi "libssh/libssh.h ssh_pki_import_pubkey_base64"
+  ssh_pki_import_pubkey_base64
+  :: CString -> SSHKeyType -> Ptr SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_pki_import_pubkey_file"
+  ssh_pki_import_pubkey_file
+  :: CString -> Ptr SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_pki_import_cert_base64"
+  ssh_pki_import_cert_base64
+  :: CString -> SSHKeyType -> Ptr SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_pki_import_cert_file"
+  ssh_pki_import_cert_file
+  :: CString -> Ptr SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_pki_generate"
+  ssh_pki_generate
+  :: SSHKeyType -> CInt -> Ptr SSHKey -> IO CInt
+foreign import capi "libssh/libssh.h ssh_pki_export_privkey_to_pubkey"
+  ssh_pki_export_privkey_to_pubkey
+  :: SSHKey -> Ptr SSHKey -> IO CInt
+
 
 -- ** The SSH session functions
 foreign import capi "libssh/libssh.h ssh_service_request" ssh_service_request
